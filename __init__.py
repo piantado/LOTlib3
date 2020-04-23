@@ -4,7 +4,7 @@
 # We'll try to follow semantic versioning: http://semver.org/
 #=============================================================================================================
 
-LOTlib_VERSION = "0.9.0" # major; minor; patch
+LOTlib3_VERSION = "0.1.0" # major; minor; patch
 
 #=============================================================================================================
 # This allows us to use the variable SIG_INTERRUPTED inside loops etc
