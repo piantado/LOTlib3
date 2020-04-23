@@ -72,5 +72,5 @@ if __name__ == "__main__":
         if i % thin == 0:
             print("#", i, h.posterior_score, h.prior, h.likelihood, qq(h))
 
-for h in top:
-    print(h.posterior_score, h.prior, h.likelihood, qq(h))
+    for h in top:
+        print(h.posterior_score, h.prior, h.likelihood, qq(h))
