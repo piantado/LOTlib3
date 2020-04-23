@@ -1,0 +1,5 @@
+# seasons (mod 4)
+next summer = fall
+next fall = winter
+next winter = spring
+next spring = summer

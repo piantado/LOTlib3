@@ -1,0 +1,10 @@
+not True = False
+not False = True
+conjunction False False = False
+conjunction False True = False
+conjunction True False = False
+conjunction True True = True
+disjunction False False = False
+disjunction False True = True
+disjunction True False = True
+disjunction True True = True

@@ -1,0 +1,7 @@
++ 1 1 = 2
++ 2 1 = many
++ 1 2 = many
++ many 1 = many
++ many 2 = many
++ 1 many = many
++ 2 many = many
