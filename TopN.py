@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import heapq
 from LOTlib3.Miscellaneous import Infinity
 
@@ -36,8 +34,7 @@ class TopN(object):
         return (y in self.unique_set)
 
     def __iter__(self):
-        for x in self.Q:
-            yield x.item
+        yield from self.get_all(sorted=True)
 
     def __len__(self):
         return len(self.Q)
