@@ -16,7 +16,7 @@ def make_data(n=1, alpha=0.999):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 from LOTlib3.DefaultGrammars import DNF
-from LOTlib3.Miscellaneous import q
+from LOTlib3.Miscellaneous import q, random
 
 # DNF defaultly includes the logical connectives so we need to add predicates to it.
 grammar = DNF
@@ -45,15 +45,15 @@ grammar.add_rule('SHAPE', q('diamond'), None, 1.0)
 from LOTlib3.Hypotheses.LOTHypothesis import LOTHypothesis
 from LOTlib3.Hypotheses.Priors.RationalRules import RationaRulesPrior
 from LOTlib3.Hypotheses.Likelihoods.BinaryLikelihood import BinaryLikelihood
+from LOTlib3.Hypotheses.Proposers.InsertDeleteRegenerationProposer import InsertDeleteRegenerationProposer
+
+from LOTlib3.Hypotheses.Proposers.RegenerationProposer import RegenerationProposer
+from LOTlib3.Hypotheses.Proposers.Proposer import ProposalFailedException
 
 class MyHypothesis(RationaRulesPrior, BinaryLikelihood, LOTHypothesis):
-    pass
-
-
-def make_hypothesis(grammar=grammar, **kwargs):
-    h = MyHypothesis(grammar=grammar, **kwargs)
-    h.rrAlpha=2.0 # set this
-    return h
+    def __init__(self, **kwargs):
+        LOTHypothesis.__init__(self, grammar=grammar, **kwargs)
+        self.rrAlpha=2.0
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Main
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     from LOTlib3.TopN import TopN
     from LOTlib3.Samplers.MetropolisHastings import MetropolisHastingsSampler
 
-    h0   = make_hypothesis()
+    h0   = MyHypothesis()
     data = make_data()
     top  = TopN(N=10)
     thin = 100
@@ -75,4 +75,7 @@ if __name__ == "__main__":
         top << h
 
         if i % thin == 0:
-            print(i, h.posterior_score, h.prior, h.likelihood, qq(h))
+            print("#", i, h.posterior_score, h.prior, h.likelihood, qq(h))
+
+for h in top:
+    print(h.posterior_score, h.prior, h.likelihood, qq(h))
