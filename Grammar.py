@@ -1,7 +1,7 @@
 # *- coding: utf-8 -*-
 
-try: import numpy as np
-except ImportError: import numpypy as np
+#try: import numpy as np
+#except ImportError: import numpypy as np
 
 from copy import copy
 from collections import defaultdict

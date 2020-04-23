@@ -1,8 +1,6 @@
 """
     Regeneration Proposer - choose a node of type X and replace it with
     a newly sampled value of type X.
-
-    NOTE: ERGODIC!
 """
 
 from LOTlib3.BVRuleContextManager import BVRuleContextManager
@@ -57,6 +55,3 @@ class RegenerationProposer(Proposer):
                     chosen_node1 = None
 
         return logsumexp(lps)
-
-if __name__ == "__main__": # test code
-    test_proposer(RegenerationProposer)

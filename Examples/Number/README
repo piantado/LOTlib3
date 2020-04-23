@@ -1,0 +1,11 @@
+
+
+A new implementation of the number learning model from Piantadosi, Tenenbaum & Goodman, in press. 
+
+This searches over functions mapping sets to words, and eventually discovers the recursive form for number words. 
+
+You can run Search.py (on MPI if preferred) and this outputs a file of top hypotheses. 
+
+Then execute EvaluateTop.py > o.txt and this scores the top hypotheses on data, computing average likelihoods etc. 
+Then o.txt can be plotted used plot-learning-curves.R
+	

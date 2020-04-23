@@ -1,9 +1,10 @@
 from LOTlib3.Eval import * # Necessary for compile_function eval below
 from LOTlib3.Hypotheses.FunctionHypothesis import FunctionHypothesis
-from LOTlib3.Hypotheses.Proposers import regeneration_proposal, ProposalFailedException
+from LOTlib3.Hypotheses.Proposers import ProposalFailedException
 from LOTlib3.Miscellaneous import self_update
 from LOTlib3.Primitives import *
 from .Priors.PCFGPrior import PCFGPrior
+from .Proposers import regeneration_proposal
 
 class LOTHypothesis(PCFGPrior, FunctionHypothesis):
     """A FunctionHypothesis built from a grammar.

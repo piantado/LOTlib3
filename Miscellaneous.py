@@ -7,7 +7,7 @@ Miscellaneous functions for LOTlib3.
 # Special handling to deal with numpypy (which actually tends to be slower for LOTlib)
 import collections
 import math
-from math import exp, log, pi
+from math import exp, log, pi, lgamma
 from random import random, sample
 import re
 import os
@@ -15,6 +15,7 @@ import inspect
 import sys
 import getpass
 import types    # For checking if something is a function: isinstance(f, types.FunctionType)
+
 try: import numpy as np
 except ImportError: import numpypy as np
 
@@ -380,17 +381,10 @@ def log1mexp(a, epsilon=1e-6):
     else:
         return log(-expm1(a))
 
-# Special handilng for numpypy that doesn't use gammaln, assertion error otherwise
-try:
-    from scipy.special import gammaln
-except ImportError:
-    # Die if we try to use this in numpypy
-    def gammaln(*args, **kwargs): assert False
 
-
-def beta(a):
+def beta(x):
     """ Here a is a vector (of ints or floats) and this computes the Beta normalizing function,"""
-    return np.sum(gammaln(np.array(a, dtype=float))) - gammaln(float(sum(a)))
+    return sum(lgamma(a) for a in x) - lgamma(float(sum(x)))
 
 
 def normlogpdf(x, mu, sigma):
@@ -463,7 +457,6 @@ def sample1(*args):
 def sample_one(*args):
     if len(args) == 1:
         return sample(args[0], 1)[0]     # use the list you were given
-        return sample(args[0], 1)[0]     # use the list you were given
     else:
         return sample(args, 1)[0]       # treat the arguments as a list
 
@@ -497,7 +490,7 @@ def weighted_sample(objs, N=1, probs=None, log=False, return_probability=False, 
     myprobs = None
     if probs is None:
         myprobs = [1.0] * len(objs)     # Sample uniform
-    elif isinstance(probs, types.FunctionType) or isinstance(probs, types.UnboundMethodType):     # Note: this does not work for class instance methods
+    elif isinstance(probs, types.FunctionType):     # Note: this does not work for class instance methods
         myprobs = list(map(probs, objs))
     else:
         myprobs = list(map(float, probs))

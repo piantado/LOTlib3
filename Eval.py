@@ -3,9 +3,6 @@
 """
 import sys
 import builtins
-"""
-    The exceptions we throw for all problems in Evaluation
-"""
 
 class EvaluationException(Exception):
     pass
