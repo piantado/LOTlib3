@@ -120,7 +120,7 @@ For convenience, when `compute_posterior` is called, it sets attributes on `h` f
 
 We are almost there. We have define a grammar and a hypothesis which uses the grammar to define a prior, and custom code to define a likelihood. LOTlib3's main claim to fame is that we can simply import MCMC routines and do inference over the space defined by the grammar. It's very easy:
 ```python
-    from LOTlib3.Inference.Samplers.MetropolisHastings import MetropolisHastingsSampler
+    from LOTlib3.Samplers.MetropolisHastings import MetropolisHastingsSampler
     
     # define a "starting hypothesis". This one is essentially copied by 
     # all proposers, so the sampler doesn't need to know its type or anything. 
@@ -157,7 +157,7 @@ Fortunately, we can hack our hypothesis class to address this by catching the ex
 
     class MyHypothesis(LOTHypothesis):
         def __init__(self, **kwargs):
-            LOTHypothesis.__init__(self, grammar=grammar, display="lambda: %s", **kwargs)
+            LOTHypothesis.__init__(self, grammar=grammar, display="lambda x: %s", **kwargs)
             
         def __call__(self, *args):
             try:
