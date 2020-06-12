@@ -224,7 +224,7 @@ If our sampler is working correctly, it should be the case that the time average
 ```
 ## Primitives
 
-LOTlib3 also builds in a number of primitive operations, which live in LOTlib3.Evaluation.Primitives. When these are supplied as the <FUNCTION> in grammar rule, they act as functions that get called. **By convention, LOTlib3 internal primitives end in an underscore**. Here is an example equivalent to the grammar above, but using LOTlib3 function calls. 
+LOTlib3 also builds in a number of primitive operations, which live in LOTlib3.Primitives. When these are supplied as the <FUNCTION> in grammar rule, they act as functions that get called. **By convention, LOTlib3 internal primitives end in an underscore**. Here is an example equivalent to the grammar above, but using LOTlib3 function calls. 
 ```python 
 
     grammar.add_rule('EXPR', 'plus_', ['EXPR', 'EXPR'], 1.0)
@@ -241,7 +241,7 @@ There are many functions built-in to python, including a number of operations fo
 
 You can also create new primitives. To make a custom function accessible to LOTlib3's evaluator, use the `@primitive` decorator:
 ```python
-    from LOTlib3.Evaluation.Eval import primitive
+    from LOTlib3.Eval import primitive
     
     @primitive
     def my_stupid_primitive_(x):
