@@ -2,9 +2,9 @@
 
 # Introduction
 
-LOTlib3 is a library for inferring compositions of functions from observations of their inputs and outputs. This tutorial will introduce a very simple problem and how it can be solved in LOTlib3. 
+LOTlib3 is a library for inferring compositions of functions from observations of their inputs and outputs or simply their outputs if there is no input. This tutorial will introduce a very simple problem and how it can be solved in LOTlib3. 
 
-Suppose that you know basic arithmetic operations (called "primitives") like addition (+), subtraction (-), multiplication (*) and division (/). You observe a number which has been constructed using these operations, and wish to infer which operations were used. We'll assume that you observe the single number `12` and then do Bayesian inference in order to discover which operations occurred. For instance, 12 may be written as `(1+1) * 6`, involving an addition, a multiplication, two uses of 1, and one use of 6. Or it may have been written as ` 1 + 11`, or `2 * 3 * 2`, etc. There are lots of other ways.
+Suppose that you know basic arithmetic operations (called "primitives") like addition (+), subtraction (-), multiplication (*) and division (/). You observe a number which has been constructed using these operations, and wish to infer which operations were used. We'll assume that you observe the single number `12` and then do Bayesian inference in order to discover which operations occurred. For instance, 12 may be written as `(1+1) * 6`, involving an addition, a multiplication, two uses of 1, and one use of 6. Or it may have been written as ` 1 + 11`, or `2 * 3 * 2`, etc. There are lots of other ways.  Which one is correct?  Well any composition of addition, subtraction, multiplication, etc... that outputs a 12 would be consistent with the data.  However, some might seem more plausible than others.  For instance it might be unlikely the 12 was generated as 12+(1-1+1-1+1-1+1-1+1-1+1-1+1-1+1-1) as it seems a rather obtuse way to have arrived as 12.  LOTLib3 is designed to help you make sensible decisions about which compositions of functions likely explain a particular set of outputs or input-output pairs.
 
 ## Grammars
 
@@ -12,7 +12,7 @@ The general strategy of LOTlib3 models is to specify a space of possible composi
 
 However, the best way to understand the grammar is as a way of specifying a program: any expansion of the grammar "renders" into a python program, whose code can then be evaluated. This will be made more concrete later.
 
-For now, here is how we can construct a grammar
+For now, here is how we can construct a simple example grammar
 
 ```python
     from LOTlib3.Grammar import Grammar
@@ -28,17 +28,17 @@ For now, here is how we can construct a grammar
     grammar.add_rule('EXPR', '(float(%s) / float(%s))', ['EXPR', 'EXPR'], 1.0)
     grammar.add_rule('EXPR', '(-%s)', ['EXPR'], 1.0)
     
-    # And define some numbers. We'll give them a 1/n^2 probability
-    for n in xrange(1,10):
-        grammar.add_rule('EXPR', str(n), None, 10.0/n**2)
+    # And define some numbers. We'll give them a 1/(n^2) probability
+    for n in range(1,10):
+        grammar.add_rule('EXPR', str(n), None, 10.0/(n**2))
 ```
 A few things to note here. The grammar rules have the format
 ```python
     grammar.add_rule( <NONTERMINAL>, <FUNCTION>, <ARGUMENTS>, <PROBABILITY>)
 ```
-where <NONTERMINAL> says what nonterminal this rule is expanding. Here there is only one kind of nonterminal, an expression (EXPR). <FUNCTION> here is the function that this rule represents. These are strings that name defined functions in LOTlib3, but they can also be strings (as here) where the <ARGUMENTS> get substituted in via string substitution (so for instance, "(%s+%s)" can be viewed as the function `lambda x,y: eval("(%s+%s)"%(x,y)))`. The arguments are a list of the arguments to the function. Note that the <FUNCTION> string can be pretty complex. For division, we have `(float(%s) / float(%s))`, which forces the function to use floating point division, not python's default. 
+where <NONTERMINAL> says what nonterminal this rule is expanding. In this example, there is only one kind of nonterminal, an expression (denoted EXPR). The <FUNCTION> argument is the function that this rule represents. These are strings that name defined functions in LOTlib3, but they can also be strings (as here) where the <ARGUMENTS> get substituted in via string substitution (so for instance, "(%s+%s)" can be viewed as the function `lambda x,y: eval("(%s+%s)"%(x,y)))`. The arguments are a list of the arguments to the function. Note that the <FUNCTION> string can be pretty complex. For division, we have `(float(%s) / float(%s))`, which forces the function to use floating point division, not python's default. 
 
-If the <FUNCTION> is a terminal that does not take arguments (as in the numbers 1..10), the <ARGUMENTS> part of a rule should be None. Note that None is very different from an empty list:
+If the <FUNCTION> is a terminal that does not take arguments (as in the numbers 0..9), the <ARGUMENTS> part of a rule should be None. Note that None is very different from an empty list:
 ```python
     grammar.add_rule('EXPR', 'hello', None, 1.0)
 ```
@@ -49,7 +49,7 @@ renders into the program "hello" but
 renders into "hello()". 
 
 
-The production probabilities are, for now, fixed. Note that the numbers have probabilities proportional to 1/n**2. But we multiplied those values by 10, making them as a group much more likely than other operations. This is important because the PCFG has to define a proper probability distribution. This means that a nonterminal must have a probability of 1 of eventually leading to a terminal (a terminal is any rule with `None` as its <ARGUMENTS>). The easiest way to ensure this is to upweight the probabilities on terminals so they are more likely to be sampled.
+The production probabilities are, for now, fixed. Note that the numbers have probabilities proportional to 1/n**2.  This means that is prefers smaller numbers. But we also multiplied those values by 10, making them as a group much more likely than other operations. This is important because the PCFG has to define a proper probability distribution. This means that a nonterminal must have a probability of 1 of eventually leading to a terminal (a terminal is any rule with `None` as its <ARGUMENTS>). The easiest way to ensure this is to upweight the probabilities on terminals so they are more likely to be sampled.  We might have been ok in this simple case because we are only dealing with the numbers 1-9 but as the number of terminal possibilities increases eventually the probability of sampling one would become very small compared to repeatedly sampling the more complex expressions that have weight 1.0.
     
 We can see some productions from this grammar if we call Grammar.generate. We will also show the probability of this tree according to the grammar, which is computed by renormalizing the <PROBABILITY> values of each rule when expanding each nonterminal:
 ```python
@@ -64,6 +64,9 @@ Note that even though each `t` is a tree (a hierarchy of LOTlib3.FunctionNodes),
     t = grammar.generate()
     t.fullprint()
 ```
+
+There is a column in this output that should say 'None' for each row of the output.  It is ok to ignore that for now.
+
 ## Hypotheses
 
 The grammar nicely specifies a space of expressions, but LOTlib3 needs a "hypothesis" to perform inference. In LOTlib3, hypotheses must define functions for computing priors, computing the likelihood of data, and implementing proposals in order for MCMC to work. In most cases, a hypothesis will represent a single production from the grammar.
@@ -76,7 +79,7 @@ Fortunately, for our purposes, there is a simple hypothesis class that it built-
     # define a 
     class MyHypothesis(LOTHypothesis):
         def __init__(self, **kwargs):
-            LOTHypothesis.__init__(self, grammar=grammar, display="lambda x: %s", **kwargs)
+            LOTHypothesis.__init__(self, grammar=grammar, display="lambda: %s", **kwargs)
     
         def compute_single_likelihood(self, datum):
             if self(*datum.input) == datum.output:
@@ -94,26 +97,26 @@ Essentially, `compute_likelihood` maps `compute_single_likelihood` over a list o
 Given that our hypothesis wants those kinds of data, we can then create data as follows:
 ```python
     from LOTlib3.DataAndObjects import FunctionData
-    data = [ FunctionData(input=[6], output=12, alpha=0.95) ]
+    data = [ FunctionData(input=[], output=12, alpha=0.95) ]
 ```
-Note here that the most natural form of data is a list--even if it is only a single element--where each element, a datum, gets passed to `compute_single_likelihood`. The data here specifies the input, output, and noise value `alpha`. Note that even though `alpha` could live as an attribute of hypotheses, it makes most sense to view it as a known part of the data. 
+Note here that the most natural form of data is a list--even if it is only a single element--where each element, a datum, gets passed to `compute_single_likelihood`. The data here specifies the input, output, and noise value `alpha`. Note that even though `alpha` could live as an attribute of hypotheses, it makes most sense to view it as a known part of the data. Here input is a empty list because there is no input!  Remember the example we started with was explaining a single output (the number 12).  Keep reading to understand examples with an input below!
 
 ## Making hypotheses
 
 We may now use our definition of a hypothesis to make one. If we call the initializer without a `value` keyword, LOTHypothesis just samples it from the given grammar: 
 ```python
     h = MyHypothesis()
-    print h.compute_prior(), h.compute_likelihood(data), h
+    print(h.compute_prior(), h.compute_likelihood(data), h)
 ```
 Even better, `MyHypothesis` also inherits a `compute_posterior` function:
 ```python
-    print h.compute_posterior(data), h.compute_prior(), h.compute_likelihood(data), h
+    print(h.compute_posterior(data), h.compute_prior(), h.compute_likelihood(data), h)
 ```
 For convenience, when `compute_posterior` is called, it sets attributes on `h` for the prior, likelihood, and posterior (score):
 ```python
     h = MyHypothesis()
     h.compute_posterior(data)
-    print h.posterior_score, h.prior, h.likelihood, h
+    print(h.posterior_score, h.prior, h.likelihood, h)
 ```
 
 ## Running MCMC
@@ -129,9 +132,9 @@ We are almost there. We have define a grammar and a hypothesis which uses the gr
     # Now use the sampler like an iterator. In MetropolisHastingsSampler, compute_posterior gets called
     # so when we have an h, we can get its prior and likelihood
     for h in MetropolisHastingsSampler(h0, data, steps=100):
-        print h.posterior_score, h.prior, h.likelihood, h 
+        print(h.posterior_score, h.prior, h.likelihood, h)
 ```
-That probably went by pretty fast. Here's another thing we can do:
+That probably went by pretty fast and also generated error messages! Here's another thing we can do:
 ```python
     h0 = MyHypothesis()
     
@@ -142,13 +145,21 @@ That probably went by pretty fast. Here's another thing we can do:
         count[h] += 1
     
     for h in sorted(count.keys(), key=lambda x: count[x]):
-        print count[h], h.posterior_score, h
+        print(count[h], h.posterior_score, h)
 ```
 LOTlib3 hypotheses are required to hash nicely, meaning that they can be saved or put into dictionaries and sets like this. 
 
 ## Making our hypothesis class more robust
 
-It's possible that in running the above code, you got a zero division error. Can you see why this can happen?
+As you might have noticed we did not allow the number 0 as a terminal value in our grammar.  This is because it ran the risk of a divide by zero error.  However, we might like to include all the numbers between zero and nine.  So let's change that one part of our grammar definiton by replacing the lines like this:
+
+```python
+# And define some numbers. We'll give them a 1/((n+1)^2) probability
+    for n in range(10):
+        grammar.add_rule('EXPR', str(n), None, 10.0/((n+1)**2))
+```
+
+But how do we deal with the fact that we might get a expression with a zero in the demoninator?  This will generate a divide by zero error when evaluated by the Python interpreter.
 
 Fortunately, we can hack our hypothesis class to address this by catching the exception. A smart way to do this is to override `__call__` and return an appropriate value when such an error occurs:
 ```python
@@ -157,7 +168,7 @@ Fortunately, we can hack our hypothesis class to address this by catching the ex
 
     class MyHypothesis(LOTHypothesis):
         def __init__(self, **kwargs):
-            LOTHypothesis.__init__(self, grammar=grammar, display="lambda x: %s", **kwargs)
+            LOTHypothesis.__init__(self, grammar=grammar, display="lambda: %s", **kwargs)
             
         def __call__(self, *args):
             try:
@@ -189,9 +200,11 @@ Now with more robust code, we can run the `Counter` code above for longer and ge
     
     # print the counts and the posteriors
     for h in sorted(count.keys(), key=lambda x: count[x]):
-        print count[h], h.posterior_score, h
+        print(count[h], h.posterior_score, h)
 ```
+
 If our sampler is working correctly, it should be the case that the time average of the sampler (the `h`es from the for loop) should approximate the posterior distribution (e.g. their re-normalized scores). Let's use this code to see if that's true
+
 ```python
     # Miscellaneous stores a number of useful functions. Here, we need logsumexp, which will
     # compute the normalizing constant for posterior_scores when they are in log space
@@ -224,7 +237,7 @@ If our sampler is working correctly, it should be the case that the time average
 ```
 ## Primitives
 
-LOTlib3 also builds in a number of primitive operations, which live in LOTlib3.Evaluation.Primitives. When these are supplied as the <FUNCTION> in grammar rule, they act as functions that get called. **By convention, LOTlib3 internal primitives end in an underscore**. Here is an example equivalent to the grammar above, but using LOTlib3 function calls. 
+LOTlib3 also builds in a number of primitive operations, which live in LOTlib3.Primitives. When these are supplied as the <FUNCTION> in grammar rule, they act as functions that get called. **By convention, LOTlib3 internal primitives end in an underscore**. Here is an example equivalent to the grammar above, but using LOTlib3 function calls. 
 ```python 
 
     grammar.add_rule('EXPR', 'plus_', ['EXPR', 'EXPR'], 1.0)
@@ -237,11 +250,11 @@ Note that when these are rendered into strings, they appear as function calls (a
 ```python
     times_(plus_(x,neg_(1)), plus_(1,1))
 ```
-There are many functions built-in to python, including a number of operations for manipulating sets, numbers, and logic. The code for `divide_` shows that it does not cast its arguments to floats: here we have to do so using string substitution as above. 
+There are many functions built-in to python, including a number of operations for manipulating sets, numbers, and logic. The code for `divide_` shows that it does not cast its arguments to floats: here we have to do so using string substitution as above.  For simple thing it is up to you to decide if you like to use the built in python operators (e.g. '+') or the LOTLib3 primitive ('plus_') as they are basically the same.
 
-You can also create new primitives. To make a custom function accessible to LOTlib3's evaluator, use the `@primitive` decorator:
+You can also create new primitives which extends the functionality of LOTlib3 in many interesting way. To make a custom function accessible to LOTlib3's evaluator, use the `@primitive` decorator:
 ```python
-    from LOTlib3.Evaluation.Eval import primitive
+    from LOTlib3.Eval import primitive
     
     @primitive
     def my_stupid_primitive_(x):
@@ -251,11 +264,11 @@ Now if you use `my_stupid_primitive_` in a grammar rule, it can be "run" just li
 ```python
     grammar.add_rule('EXPR', 'my_stupid_primitive_', ['EXPR'], 1.0)
 ```
-It is friendly to give it an underscore to make sure it's not confused for a normal python function.
+It is generally more friendly to give it an underscore to make sure it's not confused for a normal python function.
 
 ## Nonterminals in the grammar
 
-It may not have been obvious in the above examples, but the <NONTERMINAL> part of each grammar rule can be viewed as specifying the *return type* of the function that rule correspond to, while the <ARGUMENTS> can be viewed as the types of the arguments. Thus, what a grammar mainly does is ensure that the primitives all get arguments of the corret types. 
+It may not have been obvious in the above examples, but the <NONTERMINAL> part of each grammar rule can be viewed as specifying the *return type* of the function that rule correspond to, while the <ARGUMENTS> can be viewed as the types of the arguments. Thus, what a grammar mainly does is ensure that the primitives all get arguments of the correct types. 
 
 Let's see another example: suppose we had two kinds of things: booleans (BOOL) and numbers (EXPR). We might write a grammar like this
 ```python
@@ -288,7 +301,7 @@ Very often, models in LOTlib3 approximate the full posterior distribution P(H|D)
         tn.add(h)
 
     for h in tn.get_all(sorted=True):
-        print h.posterior_score, h 
+        print(h.posterior_score, h)
 
 ```
 
@@ -299,9 +312,11 @@ There's also a friendly way to interface with `TopN`:
         tn << h
 ```
 
+You might notice running this that productions the results in the output 12 are given high posterior scores.  However, it still might be the case that very simple and short programs like just a single number output (like 0) are still the "top" hypothesis.  This shows the importance of thinking about the nature of your prior and the likelihood function for your problem.
+
 ## Hypotheses as functions
 
-Remember how we made `display="lambda: %s"` in the definition of MyHypothesis? That stated that a hypothesis was not a function of any arguments since the `lambda` has no arguments. However, you may have noticed that when a hypothesis is converting to a string (for printing or evaling) it acquired an additional `lambda` on the outside, indicating that the hypothesis was a function of no arguments, or a thunk [thunk](https://en.wikipedia.org/wiki/Thunk). 
+Remember how we made `display="lambda: %s"` in the definition of MyHypothesis? That stated that a hypothesis was not a function of any arguments since the `lambda` has no arguments. You may have noticed that when a hypothesis is converting to a string (for printing or evaling) it acquires this additional `lambda` on the outside, indicating that the hypothesis was a function of no arguments, or a [thunk](https://en.wikipedia.org/wiki/Thunk). 
 
 Here is a new listing where a class like MyHypothesis requires an argument. Now, when it renders, it comes with a `lambda x` in front, rather than just a `lambda`. There are two other primary changes: the grammar now has to allow the argument (`x`) to be produced in expressions, and the `datum.input` has to provide an argument, which gets bound to `x` when the function is evaluated. 
 ```python
@@ -321,8 +336,8 @@ Here is a new listing where a class like MyHypothesis requires an argument. Now,
     # be the same as used in the args below
     grammar.add_rule('EXPR', 'x', None, 1.0) 
 
-    for n in xrange(1,10):
-        grammar.add_rule('EXPR', str(n), None, 10.0/n**2)
+    for n in range(0,10):
+        grammar.add_rule('EXPR', str(n), None, 10.0/((n+1)**2))
 
     from math import log
     from LOTlib3.Hypotheses.LOTHypothesis import LOTHypothesis
@@ -363,8 +378,9 @@ Here is a new listing where a class like MyHypothesis requires an argument. Now,
     ######################################## 
     ## Actually run
     ######################################## 
-    from LOTlib3.Inference.Samplers.MetropolisHastings import MetropolisHastingsSampler
-    
+    from LOTlib3.Samplers.MetropolisHastings import MetropolisHastingsSampler
+    from LOTlib3.TopN import TopN
+
     tn = TopN(N=10) 
     h0 = MyHypothesisX()
 
@@ -374,16 +390,15 @@ Here is a new listing where a class like MyHypothesis requires an argument. Now,
 Why does this matter? Well now instead of just explaining the data we saw, we can use the hypothesis to generalize to *new*, unseen data. For instance, we can take each hypothesis and see what it has to say about other numbers
 ```python
 
-    from LOTlib3.SampleStream import *
-
     tn = TopN(N=10) 
     h0 = MyHypothesisX()
 
     for h in MetropolisHastingsSampler(h0, data, steps=10000):
         tn << h
         
-        # And now for each hypothesis, we'll see what it maps 1..10 to 
-        print map(h, range(1,11))
+    # And now for each top N hypothesis, we'll see what it maps 0..9 to 
+    for h in tn.get_all(sorted=True):
+        print(h.posterior_score, h, list(map(h, range(0,10))))
 ```
 Thus, we have taken a single data point and used it to infer a function that can *generalize* to new, unseen data or arguments. Note, though, that there is no requirement that `x` is used in each hypothesis. (If we wanted that, a LOTlib3ian way to do it would be to modify the prior to assign trees that don't use `x` to have `-Infinity` log prior). 
 
@@ -416,21 +431,20 @@ Just for fun here, let's take the posterior predictive and see how likely we are
 
     # Now add in each hypothesis' predictive
     for h in hypotheses:
-        print h 
         # the (normalized) posterior probability of this hypothesis
         p = numpy.exp(h.posterior_score - z)
         
-        for x in xrange(M):
-            output = h(x)
+        for x in range(M):
+            output = int(h(x))
             
             # only keep those that are in the right range
             if 0 <= output < M:
-                G[x][output] += p
+                G[x][int(output)] += p
 
     # And show the output
-    print numpy.array_str(G, precision=3)
+    print(numpy.array_str(G, precision=3))
 ```
-As you can see, observing that some (unseen) function maps 3->12 gives rise to nontrivial beliefs about the function underlying this transformation. 
+As you can see from the complexity of this array which shows the probabilities for different outputs given different inputs, observing that some (unseen) function maps 3->12 gives rise to nontrivial beliefs about the function underlying this transformation. 
 
 # Lambdas
 
@@ -447,7 +461,7 @@ The power of this kind of representation comes not only from an ability to learn
     
     grammar.add_rule('EXPR', 'x', None, 1.0) 
 
-    for n in xrange(1,10):
+    for n in range(1,10):
         # We'll make these lower probability so we can see more lambdas below
         grammar.add_rule('EXPR', str(n), None, 5.0/n**2)
 
@@ -460,8 +474,8 @@ The power of this kind of representation comes not only from an ability to learn
 ```
 Here, `lambda` is a special LOTlib3 keyword that *introduces a bound variable* with a unique name in expanding the <ARGUMENT>s. In other words, when the grammar happens to sample a rule whose <FUNCTION> is `'lambda'`, it creates a new variable name, allows `bv_type` to expand to this variable, expands the <ARGUMENTS> to `lambda` (here, `EXPR`), and then removes the rule from the grammar. Let's look at some productions:
 ```python
-    for _ in xrange(1000):
-        print grammar.generate()
+    for _ in range(1000):
+        print(grammar.generate())
 ```
 Now some of the trees contain `lambda` expressions, which bind a variable (defaultly rendered as `y1`). The variable `y1` can only be used below its corresponding lambda, making the grammar in LOTlib3 technically not context-free, but very weakly context-sensitive. The variables like `y1` are called **bound variables** in LOTlib3. Note that they are numbered by their height in the tree, making them unique to the nodes below, but neither sequential, nor unique in the whole tree (underlyingly, they have unique names no matter what, but not when rendered into strings). 
 
@@ -522,7 +536,7 @@ To define lambdas as functions, we only need to specify a `bv_args` list in the 
     grammar.add_rule('FUNC', 'lambda', ['EXPR'], 1.0, bv_type='EXPR')
 
 ```
-Let's look at some hypotheses. Here, we'll show only those that use `F1` as a function (thus contain the string `"F1("`:
+Let's look at some hypotheses. Here, we'll show only those that use `F1` as a function (thus contain the string `"F1("`):
 ```python
     import re 
 
@@ -590,7 +604,7 @@ Here is a simple example:
     import re
     from LOTlib3.Eval import RecursionDepthException
     
-    for _ in xrange(50000):
+    for _ in range(50000):
         h = MyRecursiveHypothesis()
         
         # Now when we call h, something funny may happen: we may get
@@ -605,7 +619,7 @@ Here is a simple example:
             
         # if we succeed, let's only show hypotheses that use recurse:
         if re.search(r"recurse_\(", str(h)):
-            print h 
-            print values
+            print(h) 
+            print(values)
 ```
 Note that there is nothing special about the `recurse_` name: it can be changed by setting `recurse=...` in `RecursiveLOTHypothesis.__init__`, but then the name should also be changed in the grammar. In this tutorial, we have only looked at defining the grammar, not in inferring recursive hypotheses. LOTlib3.Examples.Number is an example of learning a genuinely recursive function from data. 
