@@ -1,4 +1,3 @@
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Data
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -45,10 +44,10 @@ grammar.add_rule('SHAPE', q('diamond'), None, 1.0)
 from LOTlib3.Hypotheses.LOTHypothesis import LOTHypothesis
 from LOTlib3.Hypotheses.Priors.RationalRules import RationaRulesPrior
 from LOTlib3.Hypotheses.Likelihoods.BinaryLikelihood import BinaryLikelihood
-from LOTlib3.Hypotheses.Proposers.InsertDeleteRegenerationProposer import InsertDeleteRegenerationProposer
 
-from LOTlib3.Hypotheses.Proposers.RegenerationProposer import RegenerationProposer
-from LOTlib3.Hypotheses.Proposers.Proposer import ProposalFailedException
+
+# from LOTlib3.Hypotheses.Proposers.RegenerationProposer import RegenerationProposer
+# from LOTlib3.Hypotheses.Proposers.Proposer import ProposalFailedException
 
 class MyHypothesis(RationaRulesPrior, BinaryLikelihood, LOTHypothesis):
     def __init__(self, **kwargs):
