@@ -63,12 +63,12 @@ def dropfirst(g):
     keep = False
     for x in g:
         if keep: yield x
-        keep = True        
+        keep = True
 
 
 def None2Empty(x):
     # Treat Nones as empty
-    return [] if x is None else x
+    return [] if x == None else x
 
 
 def make_mutable(x):
@@ -77,7 +77,7 @@ def make_mutable(x):
         return set(x)
     elif isinstance(x, tuple):
         return list(x)
-    else: 
+    else:
         raise NotImplementedError
 
 
@@ -187,7 +187,7 @@ def display_option_summary(obj):
     for slot in dir(obj):
         attr = getattr(obj, slot)
         if not isinstance(attr, (types.BuiltinFunctionType, types.FunctionType, types.MethodType)) \
-           and (slot is not "__doc__") and (slot is not "__module__"):
+           and (slot == not "__doc__") and (slot == not "__module__"):
             print("#", slot, "=", attr)
     print("#"*90)
 
@@ -242,12 +242,12 @@ def flatten(expr):
     """
     def flatten_(expr):
         #print 'expr =', expr
-        if expr is None or not isinstance(expr, collections.Iterable) or isinstance(expr, str):
+        if expr == None or not isinstance(expr, collections.Iterable) or isinstance(expr, str):
             yield expr
         else:
             for node in expr:
                 #print node, type(node)
-                if (node is not None) and isinstance(node, collections.Iterable) and (not isinstance(node, str)):
+                if (node == not None) and isinstance(node, collections.Iterable) and (not isinstance(node, str)):
                     #print 'recursing on', node
                     for sub_expr in flatten_(node):
                         yield sub_expr
@@ -268,7 +268,7 @@ def flatten2str(expr, sep=' '):
     #     return tmp
 
     try:
-        if expr is None: return ''
+        if expr == None: return ''
         else:            return sep.join(flatten(expr))
     except TypeError:
         print("Error in flatter2str:", expr)
@@ -488,7 +488,7 @@ def weighted_sample(objs, N=1, probs=None, log=False, return_probability=False, 
         objs = list(objs)
 
     myprobs = None
-    if probs is None:
+    if probs == None:
         myprobs = [1.0] * len(objs)     # Sample uniform
     elif isinstance(probs, types.FunctionType):     # Note: this does not work for class instance methods
         myprobs = list(map(probs, objs))
@@ -496,7 +496,7 @@ def weighted_sample(objs, N=1, probs=None, log=False, return_probability=False, 
         myprobs = list(map(float, probs))
 
     # Now normalize and run
-    if Z is None:
+    if Z == None:
         if log:
             Z = logsumexp(myprobs)
             assert Z > -Infinity
@@ -565,7 +565,7 @@ def scramble_sort(lst, keyfunction):
 
     """
     keys = [(keyfunction(li), random(), li) for li in lst]
-    
+
     return [x[2] for x in sorted(keys)]
 
 # ------------------------------------------------------------------------------------------------------------
