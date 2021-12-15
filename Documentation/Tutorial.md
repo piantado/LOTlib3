@@ -579,7 +579,7 @@ Here is a simple example:
     # If we're going to allow recursion, we better have a base case
     # But this probably requires an "if" statement. LOTlib3's "if_" 
     # primitive will do the trick
-    grammar.add_rule('EXPR', 'if_', ['BOOL', 'EXPR', 'EXPR'], 1.0)
+    grammar.add_rule('EXPR', '(%s if %s else %s)', ['EXPR', 'BOOL', 'EXPR'], 1.0)
     
     # and we need to define a boolean. For now, let's just check
     # if x=1
