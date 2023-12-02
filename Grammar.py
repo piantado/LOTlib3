@@ -248,62 +248,62 @@ class Grammar(CommonEqualityMixin):
         # handle garbage that may be passed in here
         if not self.is_nonterminal(nt):
             yield nt
-            raise StopIteration
-
-        if d == 0:
-            if leaves:
-                # Note: can NOT use filter here, or else it doesn't include added rules
-                for r in self.rules[nt]:
-                    if self.is_terminal_rule(r):
-                        yield r.make_FunctionNodeStub(self, None)
-            else:
-                # If not leaves, we just put the nonterminal type in the leaves
-                yield nt
         else:
-            # Note: can NOT use filter here, or else it doesn't include added rules. No sorting either!
-            for r in self.rules[nt]:
+            # raise StopIteration
 
-                # No good since it won't be deep enough
-                if self.is_terminal_rule(r):
-                    continue
+            if d == 0:
+                if leaves:
+                    # Note: can NOT use filter here, or else it doesn't include added rules
+                    for r in self.rules[nt]:
+                        if self.is_terminal_rule(r):
+                            yield r.make_FunctionNodeStub(self, None)
+                else:
+                    # If not leaves, we just put the nonterminal type in the leaves
+                    yield nt
+            else:
+                # Note: can NOT use filter here, or else it doesn't include added rules. No sorting either!
+                for r in self.rules[nt]:
 
-
-                fn = r.make_FunctionNodeStub(self, None)
-
-                # The possible depths for the i'th child
-                # Here we just ensure that nonterminals vary up to d, and otherwise
-                child_i_depths = lambda i: range(d) if self.is_nonterminal(fn.args[i]) else [0]
-
-                # The depths of each kid
-                for cd in lazyproduct(list(map(child_i_depths, range(len(fn.args)))), child_i_depths):
-
-                    # One must be equal to d-1
-                    # TODO: can be made more efficient via permutations. Also can skip terminals in args.
-                    if max(cd) < d-1:
+                    # No good since it won't be deep enough
+                    if self.is_terminal_rule(r):
                         continue
-                    assert max(cd) == d-1
 
-                    myiter = lazyproduct(
-                        [self.enumerate_at_depth(di, nt=a, leaves=leaves) for di, a in zip(cd, fn.args)],
-                        lambda i: self.enumerate_at_depth(cd[i], nt=fn.args[i], leaves=leaves))
-                    try:
-                        while True:
-                            # Make a copy so we don't modify anything
-                            yieldfn = copy(fn)
+                    fn = r.make_FunctionNodeStub(self, None)
 
-                            # BVRuleContextManager here makes us remove the rule BEFORE yielding,
-                            # or else this will be incorrect. Wasteful but necessary.
-                            with BVRuleContextManager(self, fn, recurse_up=False):
-                                yieldfn.args = next(myiter)
-                                for a in yieldfn.argFunctionNodes():
-                                    # Update parents
-                                    a.parent = yieldfn
+                    # The possible depths for the i'th child
+                    # Here we just ensure that nonterminals vary up to d, and otherwise
+                    child_i_depths = lambda i: range(d) if self.is_nonterminal(fn.args[i]) else [0]
 
-                            yield copy(yieldfn)
+                    # The depths of each kid
+                    for cd in lazyproduct(list(map(child_i_depths, range(len(fn.args)))), child_i_depths):
 
-                    except StopIteration:
-                        # Catch this here so we continue in this loop over rules
-                        pass
+                        # One must be equal to d-1
+                        # TODO: can be made more efficient via permutations. Also can skip terminals in args.
+                        if max(cd) < d-1:
+                            continue
+                        assert max(cd) == d-1
+
+                        myiter = lazyproduct(
+                            [self.enumerate_at_depth(di, nt=a, leaves=leaves) for di, a in zip(cd, fn.args)],
+                            lambda i: self.enumerate_at_depth(cd[i], nt=fn.args[i], leaves=leaves))
+                        try:
+                            while True:
+                                # Make a copy so we don't modify anything
+                                yieldfn = copy(fn)
+
+                                # BVRuleContextManager here makes us remove the rule BEFORE yielding,
+                                # or else this will be incorrect. Wasteful but necessary.
+                                with BVRuleContextManager(self, fn, recurse_up=False):
+                                    yieldfn.args = next(myiter)
+                                    for a in yieldfn.argFunctionNodes():
+                                        # Update parents
+                                        a.parent = yieldfn
+
+                                yield copy(yieldfn)
+
+                        except StopIteration:
+                            # Catch this here so we continue in this loop over rules
+                            pass
 
     def depth_to_terminal(self, x, openset=None, current_d=None):
         """

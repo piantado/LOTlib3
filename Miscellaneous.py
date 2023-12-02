@@ -318,7 +318,7 @@ def lazyproduct(iterators, restart_ith):
                 except StopIteration:
 
                     if idx == len(iterators)-1:
-                        raise StopIteration # actually exit
+                        return
                     else:
                         # restart the current one and increment the next
                         # by NOT breaking here
