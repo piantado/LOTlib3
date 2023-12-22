@@ -19,7 +19,7 @@ def is_undef(x):
     if isinstance(x,list):
         return list(map(is_undef, x))
     else:
-        return (x is None) or (x =="undefT") or (x == "undefF") or (x == "undef")
+        return (x == None) or (x =="undefT") or (x == "undefF") or (x == "undef")
 
 @primitive
 def collapse_undef(x):
