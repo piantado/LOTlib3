@@ -187,7 +187,7 @@ def display_option_summary(obj):
     for slot in dir(obj):
         attr = getattr(obj, slot)
         if not isinstance(attr, (types.BuiltinFunctionType, types.FunctionType, types.MethodType)) \
-           and (slot is not "__doc__") and (slot is not "__module__"):
+           and (slot != "__doc__") and (slot != "__module__"):
             print("#", slot, "=", attr)
     print("#"*90)
 
@@ -285,8 +285,10 @@ def weave(*iterables):
     iterables = list(map(iter, iterables))
     while iterables:
         for i, it in enumerate(iterables):
-            try: yield next(it)
-            except StopIteration: del iterables[i]
+            try:
+                yield next(it)
+            except StopIteration:
+                del iterables[i]
 
 
 
@@ -305,9 +307,11 @@ def lazyproduct(iterators, restart_ith):
         iterators = list(map(iter, iterators))
 
         # initialize the state
-        state = [next(it) for it in iterators]
-
-        yield state
+        try:
+            state = [next(it) for it in iterators]
+            yield state
+        except StopIteration:
+            return
 
         while True:
 
